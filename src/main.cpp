@@ -1,14 +1,26 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ThingESP.h>
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
+#include <MD_Parola.h>
+#include <MD_MAX72xx.h>
+#include <SPI.h>
+
+
 
 ThingESP32 thing("josefgst", "espdisplay", "espdisplayforkit");
 
 int LED = 2;
+String message = "";
 
-LiquidCrystal_I2C lcd(0x27, 20, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
+// MAX7219 LED Matrix
+#define HARDWARE_TYPE MD_MAX72XX::FC16_HW
+#define MAX_DEVICES 4
+
+#define CLK_PIN   18  // or SCK
+#define DATA_PIN  23  // or MOSI
+#define CS_PIN    5  // or SS
+// Hardware SPI connection
+MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
 unsigned long previousMillis = 0;
 const long INTERVAL = 6000;
@@ -16,10 +28,11 @@ const long INTERVAL = 6000;
 void setup()
 {
   Serial.begin(115200);
-  lcd.init(); // initialize the lcd
-  lcd.backlight();
+
 
   pinMode(LED, OUTPUT);
+
+  P.begin();
 
   thing.SetWiFi("AndroidAP", "csw2tpz;");
 
@@ -29,12 +42,10 @@ void setup()
 String HandleResponse(String query)
 {
   Serial.println(query);
-  lcd.clear();
+  message = query;
 
-  lcd.setCursor(0, 0);
-  lcd.print(query.substring(0, 16));
-  lcd.setCursor(0, 1);
-  lcd.print(query.substring(16));
+  // while (P.displayAnimate())
+  //   P.displayText("Hello", PA_CENTER, 75, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
 
   if (query == "led on")
   {
@@ -50,16 +61,15 @@ String HandleResponse(String query)
 
   else if (query == "led status")
     return digitalRead(LED) ? "LED is ON" : "LED is OFF";
+  
+  else 
+    return "";  
 }
 void loop()
 {
 
-  // if (millis() - previousMillis >= INTERVAL)
-  // {
-  //     previousMillis = millis();
-  //     String msg = digitalRead(LED) ? "LED is ON" : "LED is OFF";
-  //     thing.sendMsg("PHONE_NUMBER", msg);
-  // }
-
   thing.Handle();
+
+  if (P.displayAnimate())
+    P.displayText(message.c_str(), PA_LEFT, 75, 3000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
 }
