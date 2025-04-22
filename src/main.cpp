@@ -62,6 +62,8 @@ String HandleResponse(String query)
   Serial.println(query);
   message = query;
 
+  deisplayOn = true;
+
   // while (P.displayAnimate())
   //   P.displayText("Hello", PA_CENTER, 75, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
   if (query == "help")
@@ -116,20 +118,30 @@ String HandleResponse(String query)
 
 
   else
-    deisplayOn = true;
     return "";
 }
+
 void loop()
 {
 
   thing.Handle();
-
-  if( !deisplayOn)
-  {
-    P.displayClear();
+  
+  if(deisplayOn)
+  { 
+    if (message.length() > MAX_DEVICES * 8)
+    {
+      if (P.displayAnimate())
+      P.displayText(message.c_str(), PA_LEFT, 75, 3000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+    }
+    else
+    {
+      P.print(message.c_str());
+    }
+    
   }
   else 
   {
-    if (P.displayAnimate())
-    P.displayText(message.c_str(), PA_LEFT, 75, 3000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
+    P.displayClear();
   }
+}
+// void loop()
