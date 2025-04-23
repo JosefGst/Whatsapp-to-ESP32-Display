@@ -10,6 +10,8 @@ ThingESP32 thing("josefgst", "espdisplay", "espdisplayforkit");
 
 int LED = 2;
 String message = "";
+#define BUF_SIZE 75
+char msg[BUF_SIZE] = {"Hello from ESP32"};
 bool deisplayOn = true;
 
 // MAX7219 LED Matrix
@@ -60,15 +62,18 @@ void setup()
 String HandleResponse(String query)
 {
   Serial.println(query);
-  message = query;
-
+  strncpy(msg, query.c_str(), sizeof(msg) - 1);
+  msg[sizeof(msg) - 1] = '\0'; // Ensure null termination
+  
   deisplayOn = true;
+  P.displayClear();
+  // P.displayReset();
 
   // while (P.displayAnimate())
   //   P.displayText("Hello", PA_CENTER, 75, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
   if (query == "help")
   {
-    return "Available commands: hello, time, led blink, led on, led off, led status, display on, display off, display status";
+    return "Available commands: \nhello, time, led blink, led on, led off, led status, on, off, display status";
   }
 
   else if (query == "hello")
@@ -103,19 +108,18 @@ String HandleResponse(String query)
   else if (query == "led status")
     return digitalRead(LED) ? "LED is ON" : "LED is OFF";
 
-  else if (query == "display off")
+  else if (query == "off")
   {
     deisplayOn = false;
-    return "Display is off";
+    return "off";
   }
-  else if (query == "display on")
-  { 
+  else if (query == "on")
+  {
     deisplayOn = true;
-    return "Display is on";
+    return "on";
   }
-  else if (query == "display status")
-    return P.displayAnimate() ? "Display is ON" : "Display is OFF";
-
+  else if (query == "status")
+    return P.displayAnimate() ? "ON" : "OFF";
 
   else
     return "";
@@ -125,21 +129,14 @@ void loop()
 {
 
   thing.Handle();
-  
-  if(deisplayOn)
-  { 
-    if (message.length() > MAX_DEVICES * 8)
-    {
-      if (P.displayAnimate())
-      P.displayText(message.c_str(), PA_LEFT, 75, 3000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
-    }
-    else
-    {
-      P.print(message.c_str());
-    }
-    
+
+  if (deisplayOn)
+  {
+    // if (P.getTextColumns(msg) > (MAX_DEVICES * 8))
+    if (P.displayAnimate())
+      P.displayText(msg, PA_LEFT, 75, 5000, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
   }
-  else 
+  else
   {
     P.displayClear();
   }
