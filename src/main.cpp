@@ -49,6 +49,7 @@ void setup()
   startMillis = millis();
 
   P.begin();
+  P.setIntensity(1);
 
   WiFiManager wm;
 
@@ -141,6 +142,32 @@ String HandleResponse(String query)
   }
   else if (query == "status")
     return P.displayAnimate() ? "ON" : "OFF";
+
+  else if (query == "+")
+  {
+    if(P.getIntensity() < MAX_INTENSITY)
+    {
+      P.setIntensity(P.getIntensity() + 1);
+    }
+    else
+    {
+      P.setIntensity(15);
+    }
+    return "increased intensity to " + String(P.getIntensity());
+
+  }
+  else if (query == "-")
+  {
+    if(P.getIntensity() > 0)
+    {
+      P.setIntensity(P.getIntensity() - 1);
+    }
+    else{
+      P.setIntensity(0);
+    }
+    return "decreased intensity to " + String(P.getIntensity());
+  }
+
 
   else
     return "";
