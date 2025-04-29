@@ -12,7 +12,8 @@ ThingESP32 thing("josefgst", "espdisplay", "espdisplayforkit");
 int LED = 2;
 String message = "";
 #define BUF_SIZE 75
-char msg[BUF_SIZE] = {"Hello from ESP32"};
+char current_msg[BUF_SIZE] = {"Hello from ESP32"};
+char new_msg[BUF_SIZE] = {"Hello from ESP32"};
 bool deisplayOn = true;
 
 // MAX7219 LED Matrix
@@ -26,18 +27,18 @@ bool deisplayOn = true;
 MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
 // TIME
-const char* ntpServer = "pool.ntp.org";
-const long gmtOffset_sec = 8*3600; // GMT+8
+const char *ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 8 * 3600; // GMT+8
 const int daylightOffset_sec = 0;
 
 // MILLIS
-unsigned long startMillis; //some global variables available anywhere in the program
+unsigned long startMillis; // some global variables available anywhere in the program
 unsigned long currentMillis;
-const unsigned long period = 10*1000; //the value is a number of milliseconds
+const unsigned long period = 10 * 1000; // the value is a number of milliseconds
+
+uint8_t state = 0;
 
 void printLocalTime();
-
-
 
 void setup()
 {
@@ -82,12 +83,12 @@ void setup()
 String HandleResponse(String query)
 {
   Serial.println(query);
-  strncpy(msg, query.c_str(), sizeof(msg) - 1);
-  msg[sizeof(msg) - 1] = '\0'; // Ensure null termination
-  
+  strncpy(new_msg, query.c_str(), sizeof(new_msg) - 1);
+  new_msg[sizeof(new_msg) - 1] = '\0'; // Ensure null termination
+
   deisplayOn = true;
   P.displayClear();
-  // P.displayReset();
+  P.displayReset();
 
   // while (P.displayAnimate())
   //   P.displayText("Hello", PA_CENTER, 75, 1000, PA_SCROLL_LEFT, PA_SCROLL_LEFT);
@@ -147,66 +148,93 @@ String HandleResponse(String query)
 
 void loop()
 {
-  currentMillis = millis();
-  
+
   thing.Handle();
 
-  
+  currentMillis = millis();
+
+  if (currentMillis - startMillis >= period)
+  {
+    startMillis = currentMillis; // IMPORTANT to save the start time of the current LED state.
+    state ^= 1;                  // Switch between 0 and 1;
+  }
 
   if (deisplayOn)
   {
-    // if (P.getTextColumns(msg) > (MAX_DEVICES * 8))
     if (P.displayAnimate())
-      P.displayText(msg, PA_LEFT, 75, 5000, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
+    {
+
+      switch (state)
+      {
+      // Show Whatsapp message
+      case 0:
+        strncpy(current_msg, new_msg, sizeof(current_msg) - 1);
+        current_msg[sizeof(current_msg) - 1] = '\0'; // Ensure null termination
+        break;
+
+      // Show time
+      case 1:
+
+        printLocalTime();
+        // strftime(current_msg, 3, "%H", &timeinfo);
+
+      default:
+        break;
+      }
+
+      if (P.getTextColumns(current_msg) > (MAX_DEVICES * 8))
+      {
+        P.displayText(current_msg, PA_LEFT, 75, 5000, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
+      }
+      else
+      {
+        P.displayText(current_msg, PA_LEFT, 75, 10000, PA_SCROLL_DOWN, PA_SCROLL_DOWN);
+      }
+    }
   }
   else
   {
     P.displayClear();
   }
-
-  if (currentMillis - startMillis >= period)
-  {
-    startMillis = currentMillis; // IMPORTANT to save the start time of the current LED state.
-    printLocalTime();
-  }
-
 }
 // void loop()
 
-
-
 // HELPER FUNCTIONS
 
-void printLocalTime(){
+void printLocalTime()
+{
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if (!getLocalTime(&timeinfo))
+  {
     Serial.println("Failed to obtain time");
     return;
   }
+  // P.print(&timeinfo, "%H:%M");
+  strftime(current_msg, 6, "%H:%M", &timeinfo);
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-  Serial.print("Day of week: ");
-  Serial.println(&timeinfo, "%A");
-  Serial.print("Month: ");
-  Serial.println(&timeinfo, "%B");
-  Serial.print("Day of Month: ");
-  Serial.println(&timeinfo, "%d");
-  Serial.print("Year: ");
-  Serial.println(&timeinfo, "%Y");
-  Serial.print("Hour: ");
-  Serial.println(&timeinfo, "%H");
-  Serial.print("Hour (12 hour format): ");
-  Serial.println(&timeinfo, "%I");
-  Serial.print("Minute: ");
-  Serial.println(&timeinfo, "%M");
-  Serial.print("Second: ");
-  Serial.println(&timeinfo, "%S");
+  // Serial.print("Day of week: ");
+  // Serial.println(&timeinfo, "%A");
+  // Serial.print("Month: ");
+  // Serial.println(&timeinfo, "%B");
+  // Serial.print("Day of Month: ");
+  // Serial.println(&timeinfo, "%d");
+  // Serial.print("Year: ");
+  // Serial.println(&timeinfo, "%Y");
+  // Serial.print("Hour: ");
+  // Serial.println(&timeinfo, "%H");
+  // Serial.print("Hour (12 hour format): ");
+  // Serial.println(&timeinfo, "%I");
+  // Serial.print("Minute: ");
+  // Serial.println(&timeinfo, "%M");
+  // Serial.print("Second: ");
+  // Serial.println(&timeinfo, "%S");
 
-  Serial.println("Time variables");
-  char timeHour[3];
-  strftime(timeHour,3, "%H", &timeinfo);
-  Serial.println(timeHour);
-  char timeWeekDay[10];
-  strftime(timeWeekDay,10, "%A", &timeinfo);
-  Serial.println(timeWeekDay);
-  Serial.println();
+  // Serial.println("Time variables");
+  // char timeHour[3];
+  // strftime(timeHour, 3, "%H", &timeinfo);
+  // Serial.println(timeHour);
+  // char timeWeekDay[10];
+  // strftime(timeWeekDay, 10, "%A", &timeinfo);
+  // Serial.println(timeWeekDay);
+  // Serial.println();
 }
