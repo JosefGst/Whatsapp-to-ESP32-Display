@@ -39,6 +39,7 @@ const unsigned long period = 10 * 1000; // the value is a number of milliseconds
 uint8_t state = 0;
 
 void printLocalTime();
+void print2matrix();
 
 void setup()
 {
@@ -145,7 +146,7 @@ String HandleResponse(String query)
 
   else if (query == "+")
   {
-    if(P.getIntensity() < MAX_INTENSITY)
+    if (P.getIntensity() < MAX_INTENSITY)
     {
       P.setIntensity(P.getIntensity() + 1);
     }
@@ -154,20 +155,19 @@ String HandleResponse(String query)
       P.setIntensity(15);
     }
     return "increased intensity to " + String(P.getIntensity());
-
   }
   else if (query == "-")
   {
-    if(P.getIntensity() > 0)
+    if (P.getIntensity() > 0)
     {
       P.setIntensity(P.getIntensity() - 1);
     }
-    else{
+    else
+    {
       P.setIntensity(0);
     }
     return "decreased intensity to " + String(P.getIntensity());
   }
-
 
   else
     return "";
@@ -180,44 +180,33 @@ void loop()
 
   currentMillis = millis();
 
-  if (currentMillis - startMillis >= period)
-  {
-    startMillis = currentMillis; // IMPORTANT to save the start time of the current LED state.
-    state ^= 1;                  // Switch between 0 and 1;
-  }
+  // if (currentMillis - startMillis >= period)
+  // {
+  //   startMillis = currentMillis; // IMPORTANT to save the start time of the current LED state.
+  //   state ^= 1;                  // Switch between 0 and 1;
+  // }
 
   if (deisplayOn)
   {
-    if (P.displayAnimate())
+
+    switch (state)
     {
+    // Show Whatsapp message
+    case 0:
+      strncpy(current_msg, new_msg, sizeof(current_msg) - 1);
+      current_msg[sizeof(current_msg) - 1] = '\0'; // Ensure null termination
+      break;
 
-      switch (state)
-      {
-      // Show Whatsapp message
-      case 0:
-        strncpy(current_msg, new_msg, sizeof(current_msg) - 1);
-        current_msg[sizeof(current_msg) - 1] = '\0'; // Ensure null termination
-        break;
+    // Show time
+    case 1:
 
-      // Show time
-      case 1:
+      printLocalTime();
+      // strftime(current_msg, 3, "%H", &timeinfo);
 
-        printLocalTime();
-        // strftime(current_msg, 3, "%H", &timeinfo);
-
-      default:
-        break;
-      }
-
-      if (P.getTextColumns(current_msg) > (MAX_DEVICES * 8))
-      {
-        P.displayText(current_msg, PA_LEFT, 75, 5000, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
-      }
-      else
-      {
-        P.displayText(current_msg, PA_LEFT, 75, 10000, PA_SCROLL_DOWN, PA_SCROLL_DOWN);
-      }
+    default:
+      break;
     }
+    print2matrix();
   }
   else
   {
@@ -238,7 +227,7 @@ void printLocalTime()
   }
   // P.print(&timeinfo, "%H:%M");
   strftime(current_msg, 6, "%H:%M", &timeinfo);
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+  // Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
   // Serial.print("Day of week: ");
   // Serial.println(&timeinfo, "%A");
   // Serial.print("Month: ");
@@ -264,4 +253,19 @@ void printLocalTime()
   // strftime(timeWeekDay, 10, "%A", &timeinfo);
   // Serial.println(timeWeekDay);
   // Serial.println();
+}
+
+void print2matrix()
+{
+  if (P.displayAnimate())
+  {
+    if (P.getTextColumns(current_msg) > (MAX_DEVICES * 8))
+    {
+      P.displayText(current_msg, PA_LEFT, 75, 5000, PA_SCROLL_LEFT, PA_SCROLL_DOWN);
+    }
+    else
+    {
+      P.displayText(current_msg, PA_LEFT, 75, 10000, PA_SCROLL_DOWN, PA_SCROLL_DOWN);
+    }
+  }
 }

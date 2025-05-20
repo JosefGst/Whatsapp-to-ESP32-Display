@@ -1,4 +1,4 @@
-# Send Whatsapp to Display
+# Whatsapp-to-ESP32-Display
 
 :hammer_and_wrench: Still under development :heavy_exclamation_mark:
 
